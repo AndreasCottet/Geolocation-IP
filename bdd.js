@@ -1,0 +1,81 @@
+const { Sequelize, DataTypes} = require('sequelize');
+
+const sequelize = new Sequelize('sqlite::memory:')
+
+try {
+    await sequelize.authenticate();
+    console.log('Connection has been established successfully.');
+} catch (error) {
+    console.error('Unable to connect to the database:', error);
+}
+
+export const IP = sequelize.define('IP', {
+    address: {
+        type: DataTypes.STRING
+    },
+    countryCode: {
+        type: DataTypes.STRING
+    },
+    countryName: {
+        type: DataTypes.STRING
+    },
+    regionCode: {
+        type: DataTypes.STRING
+    },
+    regionName: {
+        type: DataTypes.STRING
+    },
+    city: {
+        type: DataTypes.STRING
+    },
+    zip: {
+        type: DataTypes.STRING
+    },
+    lat: {
+        type: DataTypes.DOUBLE
+    },
+    lon: {
+        type: DataTypes.DOUBLE
+    },
+    timezone: {
+        type: DataTypes.STRING
+    },
+    isp: {
+        type: DataTypes.STRING
+    },
+    org: {
+        type: DataTypes.STRING,
+    },
+    as: {
+        type: DataTypes.STRING,
+    },
+    continent: {
+        type: DataTypes.STRING,
+    },
+    continentCode: {
+        type: DataTypes.STRING,
+    },
+    district: {
+        type: DataTypes.STRING,
+    },
+    asname: {
+        type: DataTypes.STRING,
+    },
+    reverse: {
+        type: DataTypes.STRING,
+    },
+    mobile: {
+        type: DataTypes.BOOLEAN,
+    },
+    proxy: {
+        type: DataTypes.BOOLEAN,
+    },
+    hosting: {
+        type: DataTypes.BOOLEAN,
+    },
+});
+
+(async () => {
+    await sequelize.sync({ force: true });
+    console.log("Base de données créé avec succès !")
+})();
