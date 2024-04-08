@@ -1,13 +1,5 @@
-const { Sequelize, DataTypes} = require('sequelize');
-
+import { Sequelize, DataTypes } from 'sequelize';
 const sequelize = new Sequelize('sqlite::memory:')
-
-try {
-    await sequelize.authenticate();
-    console.log('Connection has been established successfully.');
-} catch (error) {
-    console.error('Unable to connect to the database:', error);
-}
 
 export const IP = sequelize.define('IP', {
     address: {
@@ -75,7 +67,14 @@ export const IP = sequelize.define('IP', {
     },
 });
 
-(async () => {
-    await sequelize.sync({ force: true });
-    console.log("Base de données créé avec succès !")
-})();
+export async function initBDD() {
+    try {
+        await sequelize.authenticate();
+        console.log('Connexion à la base de données réussie !');
+
+        await sequelize.sync({ force: true });
+        console.log("Base de données créé avec succès !")
+    } catch (error) {
+        console.error('Unable to connect to the database:', error);
+    }
+}
