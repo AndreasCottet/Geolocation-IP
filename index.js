@@ -7,7 +7,7 @@ app.use(express.json())
 const port = 8080;
 
 app.get('/address', async (req, res) => {
-    let addressIP = req.params.address
+    let addressIP = req.query.address
     let address = await IP.findOne({ where: { query: addressIP } })
     res.status(200).send(address)
 })
