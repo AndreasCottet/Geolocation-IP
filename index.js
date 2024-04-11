@@ -2,15 +2,14 @@ import express from 'express';
 import { IP, initBDD } from './bdd.js';
 import { getIP } from './apiIP.js';
 
-
 const app = express();
 app.use(express.json())
 const port = 8080;
 
-
-app.get('/', async (req, res) => {
-    let ret = await getIP("147.210.204.186")
-    res.send(ret.data)
+app.get('/address', async (req, res) => {
+    let addressIP = req.params.address
+    let address = await IP.findOne({ where: { query: addressIP } })
+    res.send(address)
 })
 app.post('/address', async (req, res) => {
     console.log(req.body.address)
@@ -20,14 +19,14 @@ app.post('/address', async (req, res) => {
 })
 
 app.delete('/address', async (req, res) => {
-    IP.findOne({ where: { query: req.body.address } }).then(async (ip) => {
-        if (ip) {
-            await ip.destroy()
-            res.send('IP supprimé')
-        } else {
-            res.send('IP non trouvé')
-        }
-    })
+    let addressIP = req.body.address
+    let address = await IP.findOne({ where: { query: addressIP } })
+    if (address) {
+        await address.destroy()
+        res.send('IP supprimé')
+    } else {
+        res.send('IP non trouvé')
+    }
 })
 
 app.listen(port, async () => {
