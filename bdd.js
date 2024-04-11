@@ -1,5 +1,5 @@
 import { Sequelize, DataTypes } from 'sequelize';
-const sequelize = new Sequelize('sqlite::memory:')
+const sequelize = new Sequelize('sqlite:./db/db.db')
 
 export const IP = sequelize.define('IP', {
     address: {
