@@ -7,24 +7,21 @@ const app = express();
 app.use(express.json())
 const port = 8080;
 
-async function getIP(ip) {
-    return await axios.get(API_URL + ip)
-}
-
-app.get('/', async (req, res) => {
-    let ret = await getIP("147.210.204.186")
-    res.send(ret.data)
+app.get('/address', async (req, res) => {
+    let addressIP = req.params.address
+    let address = await IP.findOne({ where: { address: addressIP } })
+    res.send(address)
 })
 
 app.delete('/address', async (req, res) => {
-    IP.findOne({ where: { address: req.body.address } }).then(async (ip) => {
-        if (ip) {
-            await ip.destroy()
-            res.send('IP supprimé')
-        } else {
-            res.send('IP non trouvé')
-        }
-    })
+    let addressIP = req.body.address
+    let address = await IP.findOne({ where: { address: addressIP } })
+    if (address) {
+        await address.destroy()
+        res.send('IP supprimé')
+    } else {
+        res.send('IP non trouvé')
+    }
 })
 
 app.listen(port, async () => {
