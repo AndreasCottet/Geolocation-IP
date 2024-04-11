@@ -18,9 +18,9 @@ app.listen(port, async () => {
 const options = {
     swaggerDefinition: {
         info: {
-            title: 'Mon API',
+            title: 'Ma super API de géolocalisation d\'adresse IP',
             version: '1.0.0',
-            description: 'Documentation de mon API',
+            description: 'Documentation de ma super API',
         },
     },
     apis: ['./index.js'], // Chemin vers vos fichiers de routes contenant les annotations Swagger
@@ -31,13 +31,21 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 /**
  * @swagger
- * /hello:
+ * /address:
  *   get:
- *     summary: Renvoie un message de salutation
- *     description: Renvoie un message de salutation simple
+ *     summary: Récupère les informations d'une adresse IP
+ *     description: Envoie les informations d'une adresse IP passé en paramètre de la requête si elle est enregistrée
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: address
+ *         description: Une adresse IP
+ *         in: query
+ *         required: true
+ *         type: string
  *     responses:
  *       200:
- *         description: Message de salutation renvoyé avec succès
+ *         description: Les informations de l'adresse IP passé en paramètre
  */
 app.get('/address', async (req, res) => {
     let addressIP = req.query.address
@@ -68,6 +76,24 @@ app.put('/address', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /address:
+ *   delete:
+ *     summary: Supprime les informations d'une adresse IP enregistrée
+ *     description: Permet de supprimer les informations d'une addresse IP passé en paramètre
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: address
+ *         description: Une adresse IP
+ *         in: query
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: Informations de l'adresse IP supprimée
+ */
 app.delete('/address', async (req, res) => {
     let addressIP = req.body.address
     let address = await IP.findOne({ where: { query: addressIP } })
