@@ -1,18 +1,22 @@
 import express from 'express';
-import { initBDD } from './bdd.js';
-import axios from 'axios';
+import { IP, initBDD } from './bdd.js';
+import { getIP } from './apiIP.js';
 
-const API_URL = 'http://ip-api.com/json/'
 const app = express();
+app.use(express.json())
 const port = 8080;
 
-async function getIP(ip) {
-    return await axios.get(API_URL + ip)
-}
 
 app.get('/', async (req, res) => {
     let ret = await getIP("147.210.204.186")
     res.send(ret.data)
+})
+
+app.post('/address', async (req, res) => {
+    console.log(req.body.address)
+    let ret = await getIP(req.body.address)
+    res.send(ret.data)
+    IP.create(ret.data)
 })
 
 app.listen(port, async () => {

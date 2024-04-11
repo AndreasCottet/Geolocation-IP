@@ -2,16 +2,16 @@ import { Sequelize, DataTypes } from 'sequelize';
 const sequelize = new Sequelize('sqlite::memory:')
 
 export const IP = sequelize.define('IP', {
-    address: {
+    query: {
         type: DataTypes.STRING
     },
     countryCode: {
         type: DataTypes.STRING
     },
-    countryName: {
+    country: {
         type: DataTypes.STRING
     },
-    regionCode: {
+    region: {
         type: DataTypes.STRING
     },
     regionName: {
