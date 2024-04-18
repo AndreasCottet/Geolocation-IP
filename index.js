@@ -22,9 +22,9 @@ app.listen(port, async () => {
 const options = {
     swaggerDefinition: {
         info: {
-            title: 'Ma super API de géolocalisation d\'adresse IP',
+            title: 'Swagger Geolocation-IP',
             version: '1.0.0',
-            description: 'Documentation de ma super API',
+            description: 'Documentation de l\'API Geolocation-IP',
         },
     },
     apis: ['./index.js'], // Chemin vers vos fichiers de routes contenant les annotations Swagger
@@ -64,7 +64,7 @@ app.get('/address', async (req, res) => {
  * /address/{addresses}:
  *   get:
  *     summary: Récupère les informations d'une liste d'adresses IP
- *     description: Permet de récupérer les informations d'une liste d'adresses IP si elle sont enregistrées dans le système.
+ *     description: Permet de récupérer les informations d'une liste d'adresses IP si elles sont enregistrées dans le système.
  *     produces:
  *       - application/json
  *     parameters:
@@ -80,7 +80,7 @@ app.get('/address', async (req, res) => {
  *         description: Une erreur s'est produit durant l'exécution de la requête
  */
 app.get('/address/:addresses', async (req, res) => {
-    const addressesAsked = req.params.addresses?.split(";")
+    let addressesAsked = req.params.addresses?.split(";")
 
     if (!isAddressWithListAddress(addressesAsked)) {
         res.status(400).json('Adresse IP non valide')
@@ -161,8 +161,8 @@ app.post('/address', async (req, res) => {
  * @swagger
  * /address:
  *   put:
- *     summary: Récupère et enregistre les informations d'un tableau d'adresses IP
- *     description: Permet de récupérer et d'enregister les informations d'un tableau d'adresses IP.
+ *     summary: Récupère et met à jour les informations d'un tableau d'adresses IP
+ *     description: Permet de récupérer et de mettre à jour les informations d'un tableau d'adresses IP.
  *     produces:
  *       - application/json
  *     parameters:
@@ -212,8 +212,8 @@ app.put('/address', async (req, res) => {
  * @swagger
  * /address/{addresses}:
  *   delete:
- *     summary: Supprime les informations d'une liste d'adresses IP enregistrées
- *     description: Permet de supprimer les informations d'une liste d'adresses.
+ *     summary: Supprime une liste d'adresses IP  et leurs informations.
+ *     description: Permet de supprimer une liste d'adresses IP ainsi que leurs informations de la base de données.
  *     produces:
  *       - application/json
  *     parameters:
@@ -229,7 +229,8 @@ app.put('/address', async (req, res) => {
  *         description: Une erreur s'est produit durant l'exécution de la requête.
  */
 app.delete('/address/:addresses', async (req, res) => {
-    const addressesAsked = req.params.addresses?.split(";")
+    let addressesAsked = req.params.addresses?.split(";")
+
     if (!isAddressWithListAddress(addressesAsked)) {
         res.status(400).json('Adresse IP non valide')
         return
