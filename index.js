@@ -1,12 +1,13 @@
 import express from 'express';
 
 import { IP, initBDD } from './bdd.js';
-import {getIP, getMultipleIP} from './apiIP.js';
+import {getMultipleIP} from './apiIP.js';
 
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
 import cors from 'cors';
+import { isAddressWithListAddress} from "./check.js";
 
 const app = express();
 app.use(express.json())
@@ -32,106 +33,230 @@ const specs = swaggerJsdoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 
-/**
- * @swagger
- * /address/{address}:
- *   get:
- *     summary: Récupère les informations d'une adresse IP
- *     description: Permet d récupérer les informations d'une adresse IP si elle est enregistrée dans le système
- *     produces:
- *       - application/json
- *     parameters:
- *       - name: address
- *         description: Une adresse IP
- *         in: path
- *         required: true
- *         type: string
- *     responses:
- *       200:
- *         description: Les informations de l'adresse IP passé en paramètre
- */
-app.get('/address/:address', async (req, res) => {
-    const addressesAsked = req.params.address?.split(";")
-    const resQuery = await IP.findAll({ where: { query: addressesAsked } })
-    res.status(200).send(resQuery)
-})
+////////////////////////////////////////////////////////////////////////////////
 
 /**
  * @swagger
  * /address:
  *   get:
- *     summary: Récupère toutes les adresses IP enregistrées
- *     description: Permet d récupérer toutes les adresses IP et leurs informations enregistrées dans le système
+ *     summary: Récupère toutes les adresses IP enregistrées.
+ *     description: Permet de récupérer toutes les adresses IP et leurs informations enregistrées dans le système
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Les informations de toutes les adresse IP enregistrées.
+ *       400:
+ *         description: Une erreur s'est produit durant l'exécution de la requête
+ */
+app.get('/address', async (req, res) => {
+    try {
+        const addresses = await IP.findAll()
+        res.status(200).json(addresses)
+    } catch(e) {
+        res.status(400).json("Erreur lors de la récupération des adresses IP, Message : " + e.message)
+    }
+})
+
+
+/**
+ * @swagger
+ * /address/{addresses}:
+ *   get:
+ *     summary: Récupère les informations d'une liste d'adresses IP
+ *     description: Permet de récupérer les informations d'une liste d'adresses IP si elle sont enregistrées dans le système.
  *     produces:
  *       - application/json
  *     parameters:
- *       - name: address
- *         description: Une adresse IP
+ *       - name: addresses
+ *         description: Liste d'adresses IP séparées par des ;
  *         in: path
  *         required: true
  *         type: string
  *     responses:
  *       200:
- *         description: Les informations de l'adresse IP passé en paramètre
+ *         description: Les informations des adresses IP.
+ *       400:
+ *         description: Une erreur s'est produit durant l'exécution de la requête
  */
-app.get('/address', async (req, res) => {
-    const addresses = await IP.findAll()
-    res.status(200).send(addresses)
-})
+app.get('/address/:addresses', async (req, res) => {
+    const addressesAsked = req.params.addresses?.split(";")
 
-// app.get('/addressa', async (req, res) => {
-//     const addressesAddressAsked = req.body.address
-//     const addressesAddress = await getMultipleIP(addressesAddressAsked)
-//     // console.log(addressesAddress)
-//     res.status(200).send()
-// })
-
-
-app.post('/address', async (req, res) => {
-    const addressesAsked = req.body.address
-    const resQuery = await IP.findAll({ where: { query: addressesAsked } })
-    if (addressesAsked.length === resQuery.length) {
-        res.status(200).send('IP déjà enregistrée')
+    if (!isAddressWithListAddress(addressesAsked)) {
+        res.status(400).json('Adresse IP non valide')
         return
     }
 
-    res.status(201).send()
+    try {
+        const resQuery = await IP.findAll({ where: { query: addressesAsked } })
+        res.status(200).json(resQuery)
+    } catch (e) {
+        // A tester
+        res.status(400).json("Erreur lors de la récupération des adresses IP, Message : " + e.message)
+    }
 })
 
+
+/**
+ * @swagger
+ * /address:
+ *   post:
+ *     summary: Récupère et enregistre les informations d'un tableau d'adresses IP
+ *     description: Permet de récupérer et d'enregister les informations d'un tableau d'adresses IP.
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: body
+ *         description: Un tableau d'adresses IP
+ *         in: body
+ *         required: true
+ *         schema:
+ *           $ref: '#/definitions/Address'
+ *     responses:
+ *       200:
+ *         description: Les informations des adresses étaient déjà enregistrées.
+ *       201:
+ *         description: Les informations des adresses IP ont été enregistrées.
+ *       400:
+ *         description: Une erreur s'est produit durant l'exécution de la requête.
+ */
+app.post('/address', async (req, res) => {
+    let addressesAsked = req.body.addresses
+
+    if (!isAddressWithListAddress(addressesAsked)) {
+        res.status(400).json('Adresse IP non valide')
+        return
+    }
+
+    let resQuery = []
+    try  {
+        resQuery = await IP.findAll({ where: { query: addressesAsked } })
+
+        if (addressesAsked.length === resQuery.length) {
+            console.log("Toutes les adresses IP sont déjà enregistrées")
+            res.status(200).json(resQuery)
+            return
+        }
+        addressesAsked = addressesAsked.filter((el) => !resQuery.some((el2) => el2.query === el))
+
+    } catch (e) {
+        res.status(400).json("Erreur lors de la récupération des adresses IP depuis la base de données, Message : " + e.message)
+        return
+    }
+
+    let IPList = resQuery
+    try {
+        const resApi = await getMultipleIP(addressesAsked)
+        for (const address of resApi.data) {
+            IPList.push(await IP.create(address))
+        }
+        res.status(201).json(IPList)
+    } catch (e) {
+        res.status(400).json("Erreur lors de la récupération et de la création des adresses IP, Message : " + e.message)
+    }
+})
+
+
+/**
+ * @swagger
+ * /address:
+ *   put:
+ *     summary: Récupère et enregistre les informations d'un tableau d'adresses IP
+ *     description: Permet de récupérer et d'enregister les informations d'un tableau d'adresses IP.
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: body
+ *         description: Un tableau d'adresses IP
+ *         in: body
+ *         required: true
+ *         schema:
+ *           $ref: '#/definitions/Address'
+ *     responses:
+ *       200:
+ *         description: Les informations des adresses IP enregistrées.
+ *       400:
+ *         description: Une erreur s'est produit durant l'exécution de la requête.
+ */
 app.put('/address', async (req, res) => {
-    let addressIP = req.body.address
-    let address = await IP.findOne({ where: { query: addressIP } })
-    if (address) {
-        let ret = await getIP(addressIP)
-        address.update(ret.data)
-        res.status(200).send(ret.data)
-    } else {
-        res.status(200).send('IP non trouvé')
+    const addressesAsked = req.body.addresses
+
+    if (!isAddressWithListAddress(addressesAsked)) {
+        res.status(400).json('Adresse IP non valide')
+        return
+    }
+
+    try  {
+        const resQuery = await IP.findAll({ where: { query: addressesAsked } })
+
+        if(resQuery.length !== addressesAsked.length) {
+            res.status(400).json("Toutes les adresses IP n'ont pas été trouvées")
+            return
+        }
+        const resApi = await getMultipleIP(addressesAsked)
+
+        for (const address of resQuery) {
+            const addressApi = resApi.data.find((el) => el.query === address.query)
+            if (addressApi) {
+                address.update(addressApi)
+            }
+        }
+
+        res.status(200).json(resQuery)
+    } catch (e) {
+        res.status(400).json("Erreur lors de l'exécution de la requête, Message : " + e.message)
     }
 })
 
 /**
  * @swagger
- * /address/{address}:
+ * /address/{addresses}:
  *   delete:
- *     summary: Supprime les informations d'une adresse IP enregistrée
- *     description: Permet de supprimer les informations d'une addresse IP passé en paramètre
+ *     summary: Supprime les informations d'une liste d'adresses IP enregistrées
+ *     description: Permet de supprimer les informations d'une liste d'adresses.
  *     produces:
  *       - application/json
  *     parameters:
- *       - name: address
- *         description: Une adresse IP
- *         in: query
+ *       - name: addresses
+ *         description: Liste d'adresses IP séparées par des ;
+ *         in: path
  *         required: true
  *         type: string
  *     responses:
  *       200:
- *         description: Informations de l'adresse IP supprimée
+ *         description: Les informations des adresses IP ont bien été supprimées.
+ *       400:
+ *         description: Une erreur s'est produit durant l'exécution de la requête.
  */
-app.delete('/address/:address', async (req, res) => {
-    const addressesAsked = req.params.address?.split(";")
-    const resQuery = await IP.findAll({ where: { query: addressesAsked } })
-    for (const address of resQuery) {
-        await address.destroy()
+app.delete('/address/:addresses', async (req, res) => {
+    const addressesAsked = req.params.addresses?.split(";")
+    if (!isAddressWithListAddress(addressesAsked)) {
+        res.status(400).json('Adresse IP non valide')
+        return
+    }
+    try {
+        const resQuery = await IP.findAll({ where: { query: addressesAsked } })
+        if (addressesAsked.length !== resQuery.length) {
+            res.status(400).json("Toutes les adresses IP n'ont pas été trouvées")
+            return
+        }
+
+        for (const address of resQuery) {
+            await address.destroy()
+        }
+        res.status(200).json()
+    } catch (e) {
+        res.status(400).json("Erreur lors de la suppression des adresses IP, Message : " + e.message)
     }
 })
+
+/**
+ * @swagger
+ * definitions:
+ *  Address:
+ *    type: object
+ *    properties:
+ *      addresses:
+ *        type: array
+ *        default: ["147.210.204.185", "147.210.204.187", "147.210.204.186"]
+ */

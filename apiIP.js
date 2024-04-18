@@ -8,9 +8,5 @@ export async function getIP(ip) {
 }
 
 export async function getMultipleIP(ipList) {
-    return await axios.get(API_URL_BATCH + '?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,asname,reverse,mobile,proxy,hosting,query', {
-        data: JSON.stringify({
-            ipList
-        })
-    })
+    return await axios.post(API_URL_BATCH + '?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,asname,reverse,mobile,proxy,hosting,query', ipList);
 }
